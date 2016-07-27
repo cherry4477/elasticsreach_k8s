@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  creationTimestamp: null
+  labels:
+    run: es3
+  name: es3
+spec:
+  replicas: 1
+  selector:
+    run: es3
+  strategy:
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        run: es3
+    spec:
+      containers:
+      - args:
+        - elasticsearch
+        - -Ebootstrap.seccomp=false
+        - -E
+        - discovery.zen.ping.unicast.hosts=es1
+        - -E
+        - discovery.zen.ping.unicast.hosts=es2
+        - -E
+        - discovery.zen.ping.unicast.hosts=es3
+        - -Ediscovery.zen.minimum_master_nodes=2
+        env:
+        - name: ES_JAVA_OPTS
+          value: -Xms1g -Xmx1g
+        image: registry.dataos.io/library/elasticsearch:5
+        imagePullPolicy: IfNotPresent
+        name: es3
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+  - type: ConfigChange
+status: {}
